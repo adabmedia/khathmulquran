@@ -1,0 +1,579 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Adabrix; Khathmul Qur'an Tracker</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+Malayalam:wght@400;600;700&display=swap" rel="stylesheet">
+  <link href='https://unpkg.com/boxicons@2.1.4/css/boxicons.min.css' rel='stylesheet'>
+  <style>
+    :root {
+      --primary: #2563eb; --success: #10b981; --warning: #f59e0b; --info: #3b82f6; --dark: #1f2937;
+      --light: #f3f4f6; --card-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+    }
+    body { font-family: 'Segoe UI', 'Noto Sans Malayalam', sans-serif; background: var(--light); margin: 0; padding: 20px; color: #333; padding-bottom: 80px; }
+    .container { max-width: 1000px; margin: 0 auto; }
+
+    /* Loading Animation */
+    .loading-text {
+      display: inline-flex;
+      align-items: center;
+      font-weight: 600;
+      color: #666;
+      gap: 2px;
+    }
+    .loading-text span {
+      display: inline-block;
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      background-color: var(--primary);
+      animation: loading-bounce 1.4s infinite ease-in-out both;
+    }
+    .loading-text span:nth-child(1) { animation-delay: -0.32s; }
+    .loading-text span:nth-child(2) { animation-delay: -0.16s; }
+    .loading-text span:nth-child(3) { animation-delay: 0s; }
+
+    /* Center loader inside grid */
+    .project-grid .loading-container {
+      grid-column: 1 / -1;
+      display: flex;
+      justify-content: center;
+      padding: 60px 0;
+    }
+
+    @keyframes loading-bounce {
+      0%, 80%, 100% { transform: scale(0); }
+      40% { transform: scale(1); }
+    }
+
+    /* Header - Desktop */
+    header { text-align: center; margin-bottom: 30px; }
+    header h1 { color: var(--dark); margin: 0; display: flex; align-items: center; justify-content: center; gap: 12px; }
+    header h1 .header-icon { font-size: 1.8rem; color: var(--primary); }
+    header .btn-new { background: var(--primary); color: white; border: none; padding: 10px 22px; border-radius: 8px; cursor: pointer; font-weight: 600; margin-top: 12px; display: inline-flex; align-items: center; gap: 6px; font-size: 0.95rem; transition: background 0.2s; }
+    header .btn-new:hover { background: #1d4ed8; }
+
+    /* Header - Mobile Neat Design */
+    @media (max-width: 600px) {
+      body { padding: 10px; }
+      header {
+        background: white;
+        padding: 15px;
+        border-radius: 12px;
+        box-shadow: 0 2px 8px rgba(0,0,0,0.04);
+        margin-bottom: 20px;
+      }
+      header h1 {
+        font-size: 1.2rem; font-weight: 600; letter-spacing: 0.3px; gap: 8px;
+      }
+      header h1 .header-icon { font-size: 1.4rem; }
+      header .btn-new { padding: 8px 16px; font-size: 0.85rem; margin-top: 8px; }
+    }
+
+    /* Dashboard */
+    .project-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 20px; }
+    .project-card { background: white; border-radius: 12px; padding: 20px; box-shadow: var(--card-shadow); cursor: pointer; border-top: 5px solid var(--primary); transition: transform 0.2s, box-shadow 0.2s; }
+    .project-card:hover { transform: translateY(-3px); box-shadow: 0 8px 16px -2px rgba(0,0,0,0.12); }
+    
+    .card-top { display: flex; justify-content: space-between; align-items: flex-start; gap: 10px; margin-bottom: 10px; }
+    .project-name { font-size: 1.2rem; font-weight: 700; display: flex; align-items: center; gap: 8px; flex: 1; word-break: break-word; }
+    .project-name i { color: var(--dark); font-size: 1.3rem; flex-shrink: 0; }
+    
+    .card-actions { display: flex; gap: 5px; flex-shrink: 0; }
+    .icon-btn { background: var(--light); border: none; width: 30px; height: 30px; border-radius: 50%; cursor: pointer; display: flex; align-items: center; justify-content: center; color: #666; transition: all 0.2s; font-size: 1.1rem; }
+    .icon-btn:hover { background: #dbeafe; color: var(--primary); }
+    .icon-btn.del:hover { background: #fee2e2; color: #ef4444; }
+
+    .round-badge { background: var(--light); padding: 5px 12px; border-radius: 20px; font-size: 0.8rem; color: #666; display: inline-flex; align-items: center; gap: 5px; }
+
+    /* Progress */
+    .progress-group { margin-bottom: 8px; }
+    .progress-label { display: flex; justify-content: space-between; font-size: 0.85rem; margin-bottom: 2px; align-items: center; gap: 4px; }
+    .progress-label i { font-size: 1rem; }
+    .progress-label .lbl-book i { color: var(--warning); }
+    .progress-label .lbl-comp i { color: var(--success); }
+    .progress-bg { height: 8px; background: #e5e7eb; border-radius: 10px; overflow: hidden; }
+    .progress-fill { height: 100%; border-radius: 10px; transition: width 0.3s ease; }
+    .fill-booked { background: var(--warning); }
+    .fill-completed { background: var(--success); }
+
+    /* Project View */
+    .top-actions { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; flex-wrap: wrap; gap: 10px; }
+    .back-btn { background: transparent; color: var(--primary); border: 1px solid var(--primary); padding: 8px 16px; border-radius: 6px; cursor: pointer; font-weight: 600; display: inline-flex; align-items: center; gap: 6px; transition: background 0.2s; }
+    .back-btn:hover { background: #eff6ff; }
+    .share-btn { background: transparent; color: var(--dark); border: 1px solid var(--dark); padding: 8px 16px; border-radius: 6px; cursor: pointer; font-weight: 600; display: inline-flex; align-items: center; gap: 6px; transition: all 0.2s; }
+    .share-btn:hover { background: var(--light); }
+    .share-btn.copied { color: var(--success); border-color: var(--success); background: #f0fdf4; }
+
+    .info-header { background: white; padding: 20px; border-radius: 12px; margin-bottom: 15px; box-shadow: var(--card-shadow); }
+    .header-top { display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; flex-wrap: wrap; gap: 10px; }
+    .header-top h2 { margin: 0; display: flex; align-items: center; gap: 8px; }
+    .header-top h2 i { color: var(--primary); }
+
+    /* Tabs */
+    .tabs-container { margin-bottom: 15px; display: flex; gap: 10px; overflow-x: auto; padding-bottom: 5px; }
+    .tab-btn { background: white; border: 1px solid #d1d5db; padding: 8px 20px; border-radius: 20px; cursor: pointer; font-weight: 600; white-space: nowrap; font-size: 0.9rem; display: inline-flex; align-items: center; gap: 6px; transition: all 0.2s; }
+    .tab-btn.active { background: var(--primary); color: white; border-color: var(--primary); }
+    .tab-btn:not(.active):hover { background: #f9fafb; border-color: #9ca3af; }
+
+    /* Grid */
+    .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(80px, 1fr)); gap: 10px; }
+    .juz-box { background: white; padding: 10px; border-radius: 8px; text-align: center; cursor: pointer; box-shadow: var(--card-shadow); border: 2px solid transparent; position: relative; transition: all 0.2s; display: flex; flex-direction: column; align-items: center; gap: 2px; }
+    .juz-box i.juz-icon { font-size: 1rem; color: #9ca3af; transition: color 0.2s; }
+    .juz-num { font-weight: 700; display: block; font-size: 1.1rem; }
+
+    .status-available { border-color: #d1d5db; }
+    .status-available:hover { border-color: var(--success); background: #f0fdf4; }
+    .status-available:hover i.juz-icon { color: var(--success); }
+    .status-booked { border-color: var(--warning); background: #fffbeb; }
+    .status-booked i.juz-icon { color: var(--warning); }
+    .status-completed { border-color: var(--info); background: #eff6ff; opacity: 0.8; cursor: not-allowed; }
+    .status-completed i.juz-icon { color: var(--info); }
+
+    .selected-juz { border-color: var(--primary) !important; background: #e0e7ff !important; transform: scale(1.05); }
+    .selected-juz i.juz-icon { color: var(--primary) !important; }
+
+    /* Selection Bar */
+    .selection-bar { 
+      display: none; position: fixed; bottom: 0; left: 0; width: 100%; 
+      background: var(--dark); color: white; padding: 15px 20px; 
+      justify-content: space-between; align-items: center; z-index: 1000; 
+      box-shadow: 0 -4px 12px rgba(0,0,0,0.2); box-sizing: border-box; 
+    }
+    .selection-bar.active { display: flex; }
+    .selection-bar .sel-info { display: flex; align-items: center; gap: 10px; font-weight: 600; font-size: 0.95rem; }
+    .selection-bar .sel-count { background: var(--primary); color: white; width: 32px; height: 32px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 0.9rem; }
+    
+    .btn-book { 
+      background: var(--success); color: white; border: none; padding: 10px 20px; border-radius: 6px; font-weight: 600; cursor: pointer; display: inline-flex; align-items: center; gap: 6px; transition: background 0.2s; flex-shrink: 0;
+    }
+    .btn-book:hover { background: #059669; }
+
+    /* Modals */
+    .modal-overlay { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); justify-content: center; align-items: center; z-index: 2000; }
+    .modal { background: white; padding: 25px; border-radius: 12px; width: 90%; max-width: 400px; }
+    .modal h3 { display: flex; align-items: center; gap: 8px; margin-top: 0; }
+    .modal h3 i { font-size: 1.4rem; }
+    .modal p { color: #666; font-size: 0.9rem; }
+    input { width: 100%; padding: 10px 12px; margin: 10px 0; border: 1px solid #ccc; border-radius: 6px; box-sizing: border-box; font-family: inherit; font-size: 0.95rem; }
+    input:focus { outline: none; border-color: var(--primary); box-shadow: 0 0 0 3px rgba(37,99,235,0.1); }
+    .modal-btns { display: flex; gap: 10px; margin-top: 15px; }
+    .modal-btns button { flex: 1; padding: 10px; border: none; border-radius: 6px; cursor: pointer; font-weight: 600; display: inline-flex; align-items: center; justify-content: center; gap: 6px; transition: opacity 0.2s; }
+    .modal-btns button:hover { opacity: 0.85; }
+    .btn-cancel { background: #e5e7eb; color: #333; }
+    .btn-confirm { background: var(--primary); color: white; }
+
+    .reset-btn { background: white; color: var(--success); border: 1px solid var(--success); padding: 12px; width: 100%; margin-top: 20px; border-radius: 8px; cursor: pointer; font-weight: 600; display: flex; align-items: center; justify-content: center; gap: 8px; transition: all 0.2s; font-size: 0.95rem; }
+    .reset-btn:hover { background: #f0fdf4; }
+
+    .empty-state { text-align: center; grid-column: 1/-1; color: #9ca3af; padding: 40px 20px; }
+    .empty-state i { font-size: 3rem; display: block; margin-bottom: 10px; color: #d1d5db; }
+  </style>
+</head>
+<body>
+
+<div class="container" id="app"></div>
+
+<div id="modalNew" class="modal-overlay">
+  <div class="modal">
+    <h3><i class='bx bx-plus-circle' style="color:var(--primary)"></i> New Project</h3>
+    <p>Enter name of the deceased:</p>
+    <input type="text" id="inputDeceased" placeholder="Name...">
+    <div class="modal-btns">
+      <button class="btn-cancel" onclick="closeModal('modalNew')"><i class='bx bx-x'></i> Cancel</button>
+      <button class="btn-confirm" onclick="saveNewProject()"><i class='bx bx-check'></i> Create</button>
+    </div>
+  </div>
+</div>
+
+<div id="modalEdit" class="modal-overlay">
+  <div class="modal">
+    <h3><i class='bx bx-edit' style="color:var(--primary)"></i> Edit Project</h3>
+    <p>Change name of the deceased:</p>
+    <input type="text" id="inputEditName" placeholder="New Name...">
+    <div class="modal-btns">
+      <button class="btn-cancel" onclick="closeModal('modalEdit')"><i class='bx bx-x'></i> Cancel</button>
+      <button class="btn-confirm" onclick="saveEditProject()"><i class='bx bx-check'></i> Save</button>
+    </div>
+  </div>
+</div>
+
+<div id="modalBook" class="modal-overlay">
+  <div class="modal">
+    <h3><i class='bx bx-bookmark' style="color:var(--warning)"></i> Book Selected Juz</h3>
+    <p id="selectedJuzText">Selected: Juz 1, 2</p>
+    <input type="text" id="inputName" placeholder="Your Name...">
+    <div class="modal-btns">
+      <button class="btn-cancel" onclick="closeModal('modalBook')"><i class='bx bx-x'></i> Cancel</button>
+      <button class="btn-confirm" onclick="confirmBooking()"><i class='bx bx-check'></i> Confirm</button>
+    </div>
+  </div>
+</div>
+
+<script>
+  const APP_URL = "https://script.google.com/macros/s/AKfycbzz-0gixaix7QcVmbnUru-ve1kPrSnTqPNJ1g-2Ob2sqYaghZA1OaqrcBpYGJioGZGfPg/exec";
+
+  let currentView = 'dashboard';
+  let currentProjectId = null;
+  let activeRound = null;
+  let latestRound = 1;
+  let selectedJuz = [];
+  let projectRawData = [];
+  let currentBooked = 0;
+  let currentCompleted = 0;
+  let editingProjectId = null;
+  
+  let isFromSharedLink = false;
+
+  const urlParams = new URLSearchParams(window.location.search);
+  const urlPid = urlParams.get('pid');
+  if (urlPid) {
+    currentProjectId = urlPid;
+    currentView = 'project';
+    isFromSharedLink = true;
+  }
+
+  // Reusable Loading HTML
+  const loadingHtml = `<div class="loading-container"><div class="loading-text">Loading<span></span><span></span><span></span></div></div>`;
+
+  function api(action, params, cb) {
+    let script = document.createElement('script');
+    let url = APP_URL + "?action=" + action;
+    for (let k in params) url += "&" + k + "=" + encodeURIComponent(params[k]);
+    let cbName = 'cb_' + Math.random().toString(36).substr(2, 5);
+    window[cbName] = function(d) { cb(d); delete window[cbName]; document.body.removeChild(script); };
+    script.src = url + "&callback=" + cbName;
+    document.body.appendChild(script);
+  }
+
+  function render() {
+    const app = document.getElementById('app');
+    if (currentView === 'dashboard') {
+      app.innerHTML = `
+        <header>
+          <h1><i class='bx bx-book-open header-icon'></i> Khathmul Qur'an Dashboard</h1>
+          <button class="btn-new" onclick="document.getElementById('modalNew').style.display='flex'"><i class='bx bx-plus'></i> New Project</button>
+        </header>
+        <div id="projectList" class="project-grid">${loadingHtml}</div>
+      `;
+      loadDashboard();
+    } else {
+      renderProjectView();
+    }
+  }
+
+  function loadDashboard() {
+    api('getProjects', {}, function(response) {
+      const list = document.getElementById('projectList');
+      if (response.status === "Error") { list.innerHTML = `<p style="color:red;">${response.msg}</p>`; return; }
+      const projects = response.data;
+      if (!projects || projects.length === 0) {
+        list.innerHTML = `<div class="empty-state"><i class='bx bx-folder-open'></i>No projects yet.<br><small>Click "New Project" to get started.</small></div>`;
+        return;
+      }
+      list.innerHTML = projects.map(p => {
+        let bookPct = Math.round((p.booked / 30) * 100);
+        let compPct = Math.round((p.completed / 30) * 100);
+        let safeName = p.name.replace(/'/g, "\\'");
+        return `
+          <div class="project-card" onclick="openProject('${p.id}')">
+            <div class="card-top">
+              <div class="project-name"><i class='bx bx-user'></i> ${p.name}</div>
+              <div class="card-actions">
+                <button class="icon-btn" onclick="event.stopPropagation(); openEditModal('${p.id}', '${safeName}')" title="Edit"><i class='bx bx-edit'></i></button>
+                <button class="icon-btn del" onclick="event.stopPropagation(); deleteProject('${p.id}')" title="Delete"><i class='bx bx-trash'></i></button>
+              </div>
+            </div>
+            <div class="round-badge"><i class='bx bx-sync'></i> Active Khathm: ${p.round}</div>
+            <div class="progress-group" style="margin-top:15px;">
+              <div class="progress-label"><span class="lbl-book"><i class='bx bx-bookmark'></i> Booking</span><span>${bookPct}%</span></div>
+              <div class="progress-bg"><div class="progress-fill fill-booked" style="width:${bookPct}%"></div></div>
+            </div>
+            <div class="progress-group">
+              <div class="progress-label"><span class="lbl-comp"><i class='bx bx-check-circle'></i> Completion</span><span>${compPct}%</span></div>
+              <div class="progress-bg"><div class="progress-fill fill-completed" style="width:${compPct}%"></div></div>
+            </div>
+          </div>
+        `;
+      }).join('');
+    });
+  }
+
+  function openEditModal(id, currentName) {
+    editingProjectId = id;
+    document.getElementById('inputEditName').value = currentName;
+    document.getElementById('modalEdit').style.display = 'flex';
+  }
+
+  function saveEditProject() {
+    let newName = document.getElementById('inputEditName').value;
+    if (!newName) return alert("Name cannot be empty");
+    api('editProject', {pid: editingProjectId, name: newName}, function(res) {
+      if(res.status === "Success") { closeModal('modalEdit'); loadDashboard(); } 
+      else { alert("Error updating name."); }
+    });
+  }
+
+  function deleteProject(id) {
+    if (!confirm("Are you sure you want to delete this project and all its data permanently?")) return;
+    api('deleteProject', {pid: id}, function(res) {
+      if(res.status === "Success") { loadDashboard(); } 
+      else { alert("Error deleting project."); }
+    });
+  }
+
+  function renderProjectView() {
+    const backBtnHtml = isFromSharedLink ? '' : `<button class="back-btn" onclick="goBack()"><i class='bx bx-arrow-back'></i> Back to Dashboard</button>`;
+    const app = document.getElementById('app');
+    app.innerHTML = `
+      <div class="top-actions">
+        ${backBtnHtml}
+        <button class="share-btn" id="shareBtn" onclick="shareLink()"><i class='bx bx-share-alt'></i> Share Link</button>
+      </div>
+
+      <div class="info-header">
+        <div class="header-top">
+            <h2 id="projTitle"><i class='bx bx-user'></i> <div class="loading-text">Loading<span></span><span></span><span></span></div></h2>
+            <span id="projRoundBadge" class="round-badge"></span>
+        </div>
+        <div class="progress-group">
+            <div class="progress-label"><span class="lbl-book"><i class='bx bx-bookmark'></i> Booking Progress</span><span id="bookPctTxt">0%</span></div>
+            <div class="progress-bg"><div class="progress-fill fill-booked" style="width:0%" id="bookBar"></div></div>
+        </div>
+        <div class="progress-group">
+            <div class="progress-label"><span class="lbl-comp"><i class='bx bx-check-circle'></i> Completion Progress</span><span id="compPctTxt">0%</span></div>
+            <div class="progress-bg"><div class="progress-fill fill-completed" style="width:0%" id="compBar"></div></div>
+        </div>
+      </div>
+
+      <div id="tabsContainer" class="tabs-container"></div>
+      <div class="grid" id="juzGrid"></div>
+      <button id="newRoundBtn" class="reset-btn" onclick="startNewRound()"><i class='bx bx-plus-circle'></i> Start Next Khathm</button>
+    `;
+    loadProjectData();
+  }
+
+  function loadProjectData() {
+    api('getProjectData', {pid: currentProjectId}, function(res) {
+      if(!res.info.name) {
+         document.getElementById('projTitle').innerHTML = `<i class='bx bx-error-circle'></i> Invalid Project Link`;
+         return;
+      }
+      document.getElementById('projTitle').innerHTML = `<i class='bx bx-user'></i> ${res.info.name}`;
+      latestRound = res.info.currentRound;
+      projectRawData = res.juz;
+      if (activeRound === null) activeRound = latestRound;
+      renderTabs();
+      renderGrid();
+    });
+  }
+
+  function renderTabs() {
+    const container = document.getElementById('tabsContainer');
+    let html = '';
+    for (let i = 1; i <= latestRound; i++) {
+      html += `<button class="tab-btn ${i === activeRound ? 'active' : ''}" onclick="switchTab(${i})"><i class='bx bx-book-open'></i> Khathm ${i}</button>`;
+    }
+    container.innerHTML = html;
+  }
+
+  function switchTab(num) {
+    activeRound = num;
+    selectedJuz = [];
+    updateSelectionBar();
+    renderTabs();
+    renderGrid();
+  }
+
+  function getJuzIcon(status) {
+    if (status === "Completed") return 'bx-check-double';
+    if (status === "Booked") return 'bx-bookmark';
+    return 'bx-book';
+  }
+
+  function renderGrid() {
+    const grid = document.getElementById('juzGrid');
+    const roundData = projectRawData.filter(j => j.round == activeRound);
+    currentBooked = 0;
+    currentCompleted = 0;
+
+    grid.innerHTML = roundData.map(j => {
+      if (j.status === "Completed") currentCompleted++;
+      if (j.status === "Booked" || j.status === "Completed") currentBooked++;
+      let statusClass = j.status.toLowerCase();
+      let icon = getJuzIcon(j.status);
+      let userHtml = (j.status !== "Available" && j.user) ? `<small style="font-size:0.6rem; color:#666;">${j.user}</small>` : "";
+      return `
+        <div class="juz-box status-${statusClass}" id="juz-${j.juz}" onclick="handleJuzClick(${j.row}, ${j.juz}, '${j.status}')">
+          <i class='bx ${icon} juz-icon'></i>
+          <span class="juz-num">${j.juz}</span>
+          ${userHtml}
+        </div>
+      `;
+    }).join('');
+
+    updateProgressUI();
+    updateNextRoundBtn();
+  }
+
+  function updateNextRoundBtn() {
+    const roundData = projectRawData.filter(j => j.round == activeRound);
+    const isFull = roundData.every(j => j.status !== "Available");
+    const btn = document.getElementById('newRoundBtn');
+    
+    if (activeRound === latestRound && isFull) {
+      btn.style.display = "flex";
+      btn.innerHTML = `<i class='bx bx-plus-circle'></i> Start Khathm ${latestRound + 1}`;
+    } else {
+      btn.style.display = "none";
+    }
+  }
+
+  function updateProgressUI() {
+    let bookPct = Math.round((currentBooked / 30) * 100);
+    let compPct = Math.round((currentCompleted / 30) * 100);
+    document.getElementById('projRoundBadge').innerHTML = `<i class='bx bx-sync'></i> Khathm ${activeRound}`;
+    document.getElementById('bookPctTxt').innerText = bookPct + "%";
+    document.getElementById('bookBar').style.width = bookPct + "%";
+    document.getElementById('compPctTxt').innerText = compPct + "%";
+    document.getElementById('compBar').style.width = compPct + "%";
+  }
+
+  function shareLink() {
+    let baseUrl = window.location.origin + window.location.pathname;
+    let shareUrl = baseUrl + "?pid=" + currentProjectId;
+    
+    navigator.clipboard.writeText(shareUrl).then(() => {
+      let btn = document.getElementById('shareBtn');
+      btn.innerHTML = `<i class='bx bx-check'></i> Link Copied!`;
+      btn.classList.add('copied');
+      setTimeout(() => {
+        btn.innerHTML = `<i class='bx bx-share-alt'></i> Share Link`;
+        btn.classList.remove('copied');
+      }, 2000);
+    }).catch(err => { prompt("Copy this link:", shareUrl); });
+  }
+
+  function saveNewProject() {
+    let name = document.getElementById('inputDeceased').value;
+    if (!name) return alert("Enter name");
+    api('createProject', {name: name}, function(res) {
+      if (res.status === "Error") alert(res.msg);
+      else { closeModal('modalNew'); document.getElementById('inputDeceased').value = ''; render(); }
+    });
+  }
+
+  function handleJuzClick(row, juzNum, status) {
+    if (status === "Completed") return;
+    if (status === "Booked") {
+      if (confirm("Mark Juz " + juzNum + " as completed?")) {
+        let el = document.getElementById('juz-' + juzNum);
+        el.className = "juz-box status-completed";
+        el.querySelector('.juz-icon').className = 'bx bx-check-double juz-icon';
+        el.onclick = null;
+        
+        let item = projectRawData.find(j => j.juz === juzNum && j.round == activeRound);
+        if(item) item.status = "Completed";
+        
+        currentCompleted++;
+        updateProgressUI();
+        api('completeJuz', {row: row}, function(res) {});
+      }
+      return;
+    }
+    let idx = selectedJuz.indexOf(juzNum);
+    if (idx > -1) { selectedJuz.splice(idx, 1); document.getElementById('juz-' + juzNum).classList.remove('selected-juz'); }
+    else { selectedJuz.push(juzNum); document.getElementById('juz-' + juzNum).classList.add('selected-juz'); }
+    updateSelectionBar();
+  }
+
+  function updateSelectionBar() {
+    let bar = document.querySelector('.selection-bar');
+    if (!bar) {
+      document.body.insertAdjacentHTML('beforeend', `
+        <div class="selection-bar" id="selBar">
+          <div class="sel-info"><div class="sel-count" id="selCount">0</div><span id="selText">Juz Selected</span></div>
+          <button class="btn-book" onclick="openBookingModal()"><i class='bx bx-check'></i> Book Now</button>
+        </div>
+      `);
+      bar = document.getElementById('selBar');
+    }
+    if (selectedJuz.length > 0) {
+      bar.classList.add('active');
+      document.getElementById('selCount').innerText = selectedJuz.length;
+    } else {
+      bar.classList.remove('active');
+    }
+  }
+
+  function openBookingModal() {
+    document.getElementById('selectedJuzText').innerText = "Selected: Juz " + selectedJuz.join(", ");
+    document.getElementById('modalBook').style.display = 'flex';
+  }
+
+  function confirmBooking() {
+    let name = document.getElementById('inputName').value;
+    if (!name) return alert("Enter name");
+    
+    selectedJuz.forEach(jNum => {
+        let el = document.getElementById('juz-' + jNum);
+        if (el) {
+            el.className = "juz-box status-booked";
+            el.querySelector('.juz-icon').className = 'bx bx-bookmark juz-icon';
+            el.querySelector('.juz-num').insertAdjacentHTML('afterend', `<small style="font-size:0.6rem; color:#666;">${name}</small>`);
+            el.classList.remove('selected-juz');
+        }
+        currentBooked++;
+        
+        let item = projectRawData.find(j => j.juz === jNum && j.round == activeRound);
+        if (item) { item.status = "Booked"; item.user = name; }
+    });
+    
+    updateProgressUI();
+    updateNextRoundBtn();
+    closeModal('modalBook');
+    document.getElementById('inputName').value = '';
+    let tempSelected = [...selectedJuz];
+    selectedJuz = [];
+    updateSelectionBar();
+
+    api('bookJuz', {pid: currentProjectId, round: activeRound, juzList: tempSelected.join(','), user: name}, function(res) {});
+  }
+
+  function startNewRound() {
+    if (!confirm("Start a new Khathm?")) return;
+    api('startNextRound', {pid: currentProjectId}, function(res) {
+      if (res.status === "Success") { activeRound = res.newRound; loadProjectData(); } 
+      else { alert("Error: " + res.msg); }
+    });
+  }
+
+  function openProject(id) {
+    window.history.pushState({}, "", "?pid=" + id);
+    isFromSharedLink = false;
+    currentProjectId = id; activeRound = null; selectedJuz = []; currentView = 'project'; render();
+  }
+  
+  function goBack() { 
+    window.history.pushState({}, "", window.location.pathname);
+    currentView = 'dashboard'; selectedJuz = []; render(); 
+  }
+  
+  function closeModal(id) { document.getElementById(id).style.display = 'none'; }
+
+  window.addEventListener('popstate', function() {
+    const params = new URLSearchParams(window.location.search);
+    const pid = params.get('pid');
+    if (pid) { currentProjectId = pid; currentView = 'project'; isFromSharedLink = false; } 
+    else { currentView = 'dashboard'; }
+    activeRound = null;
+    render();
+  });
+
+  render();
+</script>
+</body>
+</html>
